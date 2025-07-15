@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TF Cargo – ตรวจสอบสถานะ</title>
+
+  <!-- Tailwind CDN + Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{font-family:"Prompt",sans-serif}
+    .icon{display:inline-block;margin-right:.35rem;vertical-align:middle}
+  </style>
+</head>
+<body class="bg-green-100 min-h-screen flex flex-col text-[15px] leading-relaxed">
+
+  <!-- HEADER -->
+  <header class="bg-green-600 text-white py-6 shadow">
+    <h1 class="text-2xl font-semibold text-center">
+      <span class="icon">🚚</span> TF Cargo – Order Tracking
+    </h1>
+  </header>
+
+  <!-- MAIN -->
+  <main class="flex-1 container mx-auto px-4 py-10">
+    <div class="bg-white max-w-3xl mx-auto p-6 rounded-xl shadow">
+
+      <!-- Greeting -->
+      <h2 class="text-lg font-semibold text-green-700 mb-1">สวัสดีลูกค้าที่รัก</h2>
+      <p>ขอบคุณที่ไว้วางใจใช้บริการ <strong>TF Cargo</strong> 🙏</p>
+      <p class="mb-6">กรุณากรอกรหัสคำสั่งซื้อเพื่อ <strong>ติดตามสถานะการจัดส่ง</strong></p>
+
+      <!-- Search -->
+      <div class="flex gap-2 mb-6">
+        <input id="orderInput" type="text" placeholder="เช่น DH001" class="flex-1 border border-green-400 rounded px-3 py-2">
+        <button id="searchBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">ค้นหา</button>
+      </div>
+
+      <!-- Result -->
+      <div id="result"></div>
+      <p id="msg" class="text-red-600 text-sm mt-4"></p>
+    </div>
+  </main>
+
+  <footer class="bg-green-100 text-center py-4 text-xs text-gray-600">
+    © 2025 TF Cargo. All rights reserved.
+  </footer>
+
+  <script>
+    /*  ←– THAY URL NÀY BẰNG URL APPS SCRIPT CỦA BẠN  –→ */
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyd4pIQFuGGwWRwLor52HwushjjFIPui7g4tvozWyLmrlg0IWRecCGixScTqoEIbQW-/exec';
+
+    /* -------------- HEADER LIST -------------- */
+    const headers = [
+      'รหัสออเดอร์','ชื่อลูกค้า','วันที่สั่งซื้อ','สถานะออเดอร์','ขนส่ง','ประเภทสินค้า',
+      'ค่าสินค้า (THB)','ค่าส่งในจีน (THB)','จำนวนกล่อง','น้ำหนัก (kg)',
+      'กว้าง (cm)','ยาว (cm)','สูง (cm)','คิว','ค่าขนส่งจีน→ไทย (THB)','หมายเหตุ'
+    ];
+
+    document.getElementById('searchBtn').addEventListener('click',fetchOrder);
+    document.getElementById('orderInput').addEventListener('keypress',e=>{ if(e.key==='Enter')fetchOrder(); });
+
+    /* -- fetch & render -- */
+    function fetchOrder(){
+      const code=document.getElementById('orderInput').value.trim().toUpperCase();
+      const msg=document.getElementById('msg'); msg.textContent=''; document.getElementById('result').innerHTML='';
+      if(!code){msg.textContent='กรุณากรอกรหัสออเดอร์';return;}
+
+      fetch(`${API_URL}?order=${encodeURIComponent(code)}`)
+        .then(r=>r.json())
+        .then(d=>{ if(!d.length){msg.textContent='ไม่พบรหัสนี้';return;} renderCard(d); })
+        .catch(()=>msg.textContent='เกิดข้อผิดพลาด');
+    }
+
+    /* -- build pastel card -- */
+    function renderCard(row){
+      const alt = i=> i%2? 'bg-green-200/40':'bg-green-50';
+      let trs='';
+      headers.forEach((h,i)=> trs+=`
+        <tr class=\"${alt(i)}\">
+          <td class=\"py-2 px-4 font-medium text-gray-600 w-48\">${h}</td>
+          <td class=\"py-2 px-4\">${row[i]??''}</td>
+        </tr>`);
+
+      document.getElementById('result').innerHTML = `
+        <div class=\"max-w-3xl mx-auto mt-8 rounded-xl shadow overflow-hidden\">
+          <div class=\"bg-green-100 p-4\">
+            <h3 class=\"text-xl font-semibold text-green-800 flex items-center gap-2\">
+              📦 รายละเอียดคำสั่งซื้อ <span class=\"font-normal text-gray-600\">(${row[0]})</span>
+            </h3>
+          </div>
+          <table class=\"w-full text-sm\"> <tbody>${trs}</tbody> </table>
+        </div>`;
+    }
+  </script>
+</body>
+</html>
